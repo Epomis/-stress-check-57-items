@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ストレスチェック評価アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --primary-hover-color: #0056b3;
+            --background-color: #f8f8fa;
+            --card-background-color: #ffffff;
+            --text-color: #1d1d1f;
+            --secondary-text-color: #6e6e73;
+            --border-color: #d2d2d7;
+        }
+        body {
+            font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .unanswered {
+            border: 1.5px solid #ff453a;
+            box-shadow: 0 0 8px rgba(255, 69, 58, 0.5);
+            border-radius: 12px;
+        }
+        /* Custom Radio Button Styling */
+        .custom-radio-label {
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+        input[type="radio"]:checked + .custom-radio-label {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        input[type="radio"] {
+            display: none;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl font-bold text-slate-900">ストレスチェック</h1>
+                <a href="https://workplace-healthcare.com/" target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                    提供: D2C産業医
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-[var(--card-background-color)] p-6 sm:p-8 rounded-2xl shadow-sm mb-8">
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-800 mb-3">1. 性別を選択してください</h2>
+                    <div id="gender-selection" class="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
+                        <label class="flex-1 text-center">
+                            <input type="radio" name="gender" value="male" required>
+                            <div class="custom-radio-label cursor-pointer py-2 px-4 rounded-md text-gray-700 font-medium border border-transparent">男性</div>
+                        </label>
+                        <label class="flex-1 text-center">
+                            <input type="radio" name="gender" value="female" required>
+                            <div class="custom-radio-label cursor-pointer py-2 px-4 rounded-md text-gray-700 font-medium border border-transparent">女性</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                     <h2 class="text-lg font-bold text-gray-800 mb-3">2. 各質問にご回答ください</h2>
+                     <p class="text-sm text-[var(--secondary-text-color)]">職業性ストレス簡易調査票（57項目）</p>
+                </div>
+            </div>
+            
+            <form id="stress-check-form" class="space-y-8">
+                <!-- Questions will be injected here -->
+            </form>
+
+            <div class="mt-12 text-center">
+                <button id="calculate-btn" type="button" class="w-full sm:w-auto bg-[var(--primary-color)] hover:bg-[var(--primary-hover-color)] text-white font-bold py-3 px-12 rounded-xl shadow-md transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    結果を見る
+                </button>
+            </div>
+
+            <div id="results-container" class="mt-12">
+                <!-- Result card will be injected here -->
+            </div>
+        </div>
+    </main>
+    
+    <footer class="mt-16 pb-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
+            <p>このストレスチェックは、医学的診断に代わるものではありません。</p>
+            <p class="mt-2">提供: <a href="https://workplace-healthcare.com/" target="_blank" rel="noopener noreferrer" class="font-medium hover:underline">D2C産業医</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA: Questions ---
+        const questions = [
+            // A
+            { id: 'A1', section: 'A', text: '1. 非常にたくさんの仕事をしなければならない' },
+            { id: 'A2', section: 'A', text: '2. 時間内に仕事が処理しきれない' },
+            { id: 'A3', section: 'A', text: '3. 一生懸命働かなければならない' },
+            { id: 'A4', section: 'A', text: '4. かなり注意を集中する必要がある' },
+            { id: 'A5', section: 'A', text: '5. 高度の知識や技術が必要なむずかしい仕事だ' },
+            { id: 'A6', section: 'A', text: '6. 勤務時間中はいつも仕事のことを考えていなければならない' },
+            { id: 'A7', section: 'A', text: '7. からだを大変よく使う仕事だ' },
+            { id: 'A8', section: 'A', text: '8. 自分のペースで仕事ができる' },
+            { id: 'A9', section: 'A', text: '9. 自分で仕事の順番・やり方を決めることができる' },
+            { id: 'A10', section: 'A', text: '10. 職場の仕事の方針に自分の意見を反映できる' },
+            { id: 'A11', section: 'A', text: '11. 自分の技能や知識を仕事で使うことが少ない' },
+            { id: 'A12', section: 'A', text: '12. 私の部署内で意見のくい違いがある' },
+            { id: 'A13', section: 'A', text: '13. 私の部署と他の部署とはうまが合わない' },
+            { id: 'A14', section: 'A', text: '14. 私の職場の雰囲気は友好的である' },
+            { id: 'A15', section: 'A', text: '15. 私の職場の作業環境（騒音、照明、温度、換気など）はよくない' },
+            { id: 'A16', section: 'A', text: '16. 仕事の内容は自分にあっている' },
+            { id: 'A17', section: 'A', text: '17. 働きがいのある仕事だ' },
+            // B
+            { id: 'B1', section: 'B', text: '1. 活気がわいてくる' },
+            { id: 'B2', section: 'B', text: '2. 元気がいっぱいだ' },
+            { id: 'B3', section: 'B', text: '3. 生き生きする' },
+            { id: 'B4', section: 'B', text: '4. 怒りを感じる' },
+            { id: 'B5', section: 'B', text: '5. 内心腹立たしい' },
+            { id: 'B6', section: 'B', text: '6. イライラしている' },
+            { id: 'B7', section: 'B', text: '7. ひどく疲れた' },
+            { id: 'B8', section: 'B', text: '8. へとへとだ' },
+            { id: 'B9', section: 'B', text: '9. だるい' },
+            { id: 'B10', section: 'B', text: '10. 気がはりつめている' },
+            { id: 'B11', section: 'B', text: '11. 不安だ' },
+            { id: 'B12', section: 'B', text: '12. 落着かない' },
+            { id: 'B13', section: 'B', text: '13. ゆううつだ' },
+            { id: 'B14', section: 'B', text: '14. 何をするのも面倒だ' },
+            { id: 'B15', section: 'B', text: '15. 物事に集中できない' },
+            { id: 'B16', section: 'B', text: '16. 気分が晴れない' },
+            { id: 'B17', section: 'B', text: '17. 仕事が手につかない' },
+            { id: 'B18', section: 'B', text: '18. 悲しいと感じる' },
+            { id: 'B19', section: 'B', text: '19. めまいがする' },
+            { id: 'B20', section: 'B', text: '20. 体のふしぶしが痛む' },
+            { id: 'B21', section: 'B', text: '21. 頭が重かったり頭痛がする' },
+            { id: 'B22', section: 'B', text: '22. 首筋や肩がこる' },
+            { id: 'B23', section: 'B', text: '23. 腰が痛い' },
+            { id: 'B24', section: 'B', text: '24. 目が疲れる' },
+            { id: 'B25', section: 'B', text: '25. 動悸や息切れがする' },
+            { id: 'B26', section: 'B', text: '26. 胃腸の具合が悪い' },
+            { id: 'B27', section: 'B', text: '27. 食欲がない' },
+            { id: 'B28', section: 'B', text: '28. 便秘や下痢をする' },
+            { id: 'B29', section: 'B', text: '29. よく眠れない' },
+            // C
+            { id: 'C1', section: 'C', text: '1. 上司', header: '次の人たちはどのくらい気軽に話ができますか？' },
+            { id: 'C2', section: 'C', text: '2. 職場の同僚' },
+            { id: 'C3', section: 'C', text: '3. 配偶者、家族、友人等' },
+            { id: 'C4', section: 'C', text: '4. 上司', header: 'あなたが困った時、次の人たちはどのくらい頼りになりますか？' },
+            { id: 'C5', section: 'C', text: '5. 職場の同僚' },
+            { id: 'C6', section: 'C', text: '6. 配偶者、家族、友人等' },
+            { id: 'C7', section: 'C', text: '7. 上司', header: 'あなたの個人的な問題を相談したら、次の人たちはどのくらいきいてくれますか？' },
+            { id: 'C8', section: 'C', text: '8. 職場の同僚' },
+            { id: 'C9', section: 'C', text: '9. 配偶者、家族、友人等' },
+            // D
+            { id: 'D1', section: 'D', text: '1. 仕事に満足だ' },
+            { id: 'D2', section: 'D', text: '2. 家庭生活に満足だ' },
+        ];
+
+        const answerOptions = {
+            A: [{ text: 'そうだ', value: 1 }, { text: 'まあそうだ', value: 2 }, { text: 'ややちがう', value: 3 }, { text: 'ちがう', value: 4 }],
+            B: [{ text: 'そうだ', value: 1 }, { text: 'まあそうだ', value: 2 }, { text: 'ややちがう', value: 3 }, { text: 'ちがう', value: 4 }],
+            C: [{ text: '非常に', value: 1 }, { text: 'かなり', value: 2 }, { text: '多少', value: 3 }, { text: '全くない', value: 4 }],
+            D: [{ text: '満足', value: 1 }, { text: 'まあ満足', value: 2 }, { text: 'やや不満', value: 3 }, { text: '不満', value: 4 }]
+        };
+
+        // --- UI Rendering ---
+        const form = document.getElementById('stress-check-form');
+
+        function renderQuestions() {
+            const sections = { A: [], B: [], C: [], D: [] };
+            const sectionTitles = {
+                A: 'A: あなたの仕事について',
+                B: 'B: 最近1か月間のあなたの状態について',
+                C: 'C: あなたの周りの方々について',
+                D: 'D: 満足度について'
+            };
+
+            questions.forEach(q => sections[q.section].push(q));
+
+            for (const key in sections) {
+                const sectionCard = document.createElement('div');
+                sectionCard.className = 'bg-[var(--card-background-color)] p-6 sm:p-8 rounded-2xl shadow-sm';
+                
+                const title = document.createElement('h3');
+                title.className = 'text-lg font-bold text-gray-800 mb-6';
+                title.textContent = sectionTitles[key];
+                sectionCard.appendChild(title);
+
+                sections[key].forEach(q => {
+                    if (q.header) {
+                        const subHeader = document.createElement('p');
+                        subHeader.className = 'text-md font-semibold text-gray-700 mt-8 mb-4';
+                        subHeader.textContent = q.header;
+                        sectionCard.appendChild(subHeader);
+                    }
+
+                    const questionDiv = document.createElement('div');
+                    questionDiv.id = `q-container-${q.id}`;
+                    questionDiv.className = 'py-4';
+                    
+                    const label = document.createElement('label');
+                    label.className = 'block text-md font-medium text-gray-800 mb-4';
+                    label.textContent = q.text;
+                    questionDiv.appendChild(label);
+
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2';
+                    const currentOptions = answerOptions[q.section];
+
+                    currentOptions.forEach(opt => {
+                         const optionLabel = document.createElement('label');
+                         optionLabel.className = "block";
+                         const radio = document.createElement('input');
+                         radio.type = 'radio';
+                         radio.name = q.id;
+                         radio.value = opt.value;
+                         radio.required = true;
+                         
+                         const span = document.createElement('div');
+                         span.className = 'custom-radio-label cursor-pointer text-center py-3 px-2 rounded-lg text-sm font-medium border border-gray-200';
+                         span.textContent = opt.text;
+
+                         optionLabel.appendChild(radio);
+                         optionLabel.appendChild(span);
+                         optionsDiv.appendChild(optionLabel);
+                    });
+                    questionDiv.appendChild(optionsDiv);
+                    sectionCard.appendChild(questionDiv);
+                });
+                form.appendChild(sectionCard);
+            }
+        }
+        
+        // --- Calculation Logic ---
+        function getEvaluationPoint(scaleName, value, gender) {
+            const tables = {
+                male: {
+                    '心理的な仕事の負担(量)': (v) => { if (v <= 5) return 5; if (v <= 7) return 4; if (v <= 9) return 3; if (v <= 11) return 2; return 1; },
+                    '心理的な仕事の負担(質)': (v) => { if (v <= 5) return 5; if (v <= 7) return 4; if (v <= 9) return 3; if (v <= 11) return 2; return 1; },
+                    '自覚的な身体的負担度': (v) => { if (v == 1) return 5; if (v == 2) return 3; if (v == 3) return 2; if (v == 4) return 1; return 1; },
+                    '職場の対人関係でのストレス': (v) => { if (v <= 3) return 5; if (v <= 5) return 4; if (v <= 7) return 3; if (v <= 9) return 2; return 1; },
+                    '職場環境によるストレス': (v) => { if (v <= 1) return 5; if (v == 2) return 4; if (v == 3) return 3; if (v == 4) return 2; return 1; },
+                    '仕事のコントロール度': (v) => { if (v <= 4) return 1; if (v <= 6) return 2; if (v <= 8) return 3; if (v <= 10) return 4; return 5; },
+                    '技能の活用度': (v) => { if (v == 1) return 1; if (v == 2) return 2; if (v == 3) return 4; if (v == 4) return 5; return 0; },
+                    '仕事の適性度': (v) => { if (v == 1) return 1; if (v == 2) return 2; if (v == 3) return 3; if (v == 4) return 5; return 0; },
+                    '働きがい': (v) => { if (v == 1) return 1; if (v == 2) return 2; if (v == 3) return 3; if (v == 4) return 5; return 0; },
+                    '活気': (v) => { if (v <= 3) return 1; if (v <= 5) return 2; if (v <= 7) return 3; if (v <= 9) return 4; return 5; },
+                    'イライラ感': (v) => { if (v <= 3) return 5; if (v <= 5) return 4; if (v <= 7) return 3; if (v <= 9) return 2; return 1; },
+                    '疲労感': (v) => { if (v <= 3) return 5; if (v <= 4) return 4; if (v <= 7) return 3; if (v <= 10) return 2; return 1; },
+                    '不安感': (v) => { if (v <= 3) return 5; if (v <= 4) return 4; if (v <= 7) return 3; if (v <= 9) return 2; return 1; },
+                    '抑うつ感': (v) => { if (v <= 6) return 5; if (v <= 8) return 4; if (v <= 12) return 3; if (v <= 16) return 2; return 1; },
+                    '身体愁訴': (v) => { if (v <= 11) return 5; if (v <= 15) return 4; if (v <= 21) return 3; if (v <= 26) return 2; return 1; },
+                    '上司からのサポート': (v) => { if (v <= 4) return 1; if (v <= 6) return 2; if (v <= 8) return 3; if (v <= 10) return 4; return 5; },
+                    '同僚からのサポート': (v) => { if (v <= 5) return 1; if (v <= 7) return 2; if (v <= 9) return 3; if (v <= 11) return 4; return 5; },
+                    '家族・友人からのサポート': (v) => { if (v <= 6) return 1; if (v <= 8) return 2; if (v == 9) return 3; if (v <= 11) return 4; return 5; },
+                    '仕事や生活の満足度': (v) => { if (v <= 3) return 1; if (v == 4) return 2; if (v <= 6) return 3; if (v == 7) return 4; return 5; }
+                },
+                female: {
+                    '心理的な仕事の負担(量)': (v) => { if (v <= 4) return 5; if (v <= 6) return 4; if (v <= 9) return 3; if (v <= 11) return 2; return 1; },
+                    '心理的な仕事の負担(質)': (v) => { if (v <= 4) return 5; if (v <= 6) return 4; if (v <= 8) return 3; if (v <= 10) return 2; return 1; },
+                    '自覚的な身体的負担度': (v) => { if (v == 1) return 5; if (v == 2) return 3; if (v == 3) return 2; if (v == 4) return 1; return 1; },
+                    '職場の対人関係でのストレス': (v) => { if (v <= 3) return 5; if (v <= 5) return 4; if (v <= 7) return 3; if (v <= 9) return 2; return 1; },
+                    '職場環境によるストレス': (v) => { if (v <= 1) return 5; if (v == 2) return 4; if (v == 3) return 3; if (v == 4) return 2; return 1; },
+                    '仕事のコントロール度': (v) => { if (v <= 3) return 1; if (v <= 5) return 2; if (v <= 8) return 3; if (v <= 10) return 4; return 5; },
+                    '技能の活用度': (v) => { if (v == 1) return 1; if (v == 2) return 2; if (v == 3) return 4; if (v == 4) return 5; return 0; },
+                    '仕事の適性度': (v) => { if (v == 1) return 1; if (v == 2) return 2; if (v == 3) return 3; if (v == 4) return 5; return 0; },
+                    '働きがい': (v) => { if (v == 1) return 1; if (v == 2) return 2; if (v == 3) return 3; if (v == 4) return 5; return 0; },
+                    '活気': (v) => { if (v <= 3) return 1; if (v <= 5) return 2; if (v <= 7) return 3; if (v <= 9) return 4; return 5; },
+                    'イライラ感': (v) => { if (v <= 3) return 5; if (v <= 5) return 4; if (v <= 8) return 3; if (v <= 10) return 2; return 1; },
+                    '疲労感': (v) => { if (v <= 3) return 5; if (v <= 5) return 4; if (v <= 8) return 3; if (v <= 11) return 2; return 1; },
+                    '不安感': (v) => { if (v <= 3) return 5; if (v <= 4) return 4; if (v <= 7) return 3; if (v <= 10) return 2; return 1; },
+                    '抑うつ感': (v) => { if (v <= 6) return 5; if (v <= 8) return 4; if (v <= 12) return 3; if (v <= 17) return 2; return 1; },
+                    '身体愁訴': (v) => { if (v <= 13) return 5; if (v <= 17) return 4; if (v <= 23) return 3; if (v <= 29) return 2; return 1; },
+                    '上司からのサポート': (v) => { if (v <= 3) return 1; if (v <= 5) return 2; if (v <= 7) return 3; if (v <= 10) return 4; return 5; },
+                    '同僚からのサポート': (v) => { if (v <= 5) return 1; if (v <= 7) return 2; if (v <= 9) return 3; if (v <= 11) return 4; return 5; },
+                    '家族・友人からのサポート': (v) => { if (v <= 6) return 1; if (v <= 8) return 2; if (v == 9) return 3; if (v <= 11) return 4; return 5; },
+                    '仕事や生活の満足度': (v) => { if (v <= 3) return 1; if (v == 4) return 2; if (v <= 6) return 3; if (v == 7) return 4; return 5; }
+                }
+            };
+            const conversionFunc = tables[gender]?.[scaleName];
+            return conversionFunc ? conversionFunc(value) : 0;
+        }
+
+        function calculateScores() {
+            document.querySelectorAll('.unanswered').forEach(el => el.classList.remove('unanswered'));
+            
+            const gender = document.querySelector('input[name="gender"]:checked')?.value;
+            if (!gender) {
+                showModal('性別を選択してください。');
+                return null;
+            }
+
+            const answers = {};
+            const formData = new FormData(form);
+            let firstUnanswered = null;
+
+            for (const q of questions) {
+                const value = formData.get(q.id);
+                if (value) {
+                    answers[q.id] = parseInt(value);
+                } else {
+                    if (!firstUnanswered) firstUnanswered = q.id;
+                }
+            }
+
+            if (firstUnanswered) {
+                const el = document.getElementById(`q-container-${firstUnanswered}`);
+                if (el) {
+                    el.classList.add('unanswered');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                showModal('すべての質問に回答してください。未回答の質問が赤枠で表示されています。');
+                return null;
+            }
+            
+            const scales = {
+                A: {
+                    '心理的な仕事の負担(量)': 15 - (answers.A1 + answers.A2 + answers.A3),
+                    '心理的な仕事の負担(質)': 15 - (answers.A4 + answers.A5 + answers.A6),
+                    '自覚的な身体的負担度': 5 - answers.A7,
+                    '職場の対人関係でのストレス': 10 - (answers.A12 + answers.A13) + answers.A14,
+                    '職場環境によるストレス': 5 - answers.A15,
+                    '仕事のコントロール度': 15 - (answers.A8 + answers.A9 + answers.A10),
+                    '技能の活用度': answers.A11,
+                    '仕事の適性度': 5 - answers.A16,
+                    '働きがい': 5 - answers.A17,
+                },
+                B: {
+                    '活気': 15 - (answers.B1 + answers.B2 + answers.B3),
+                    'イライラ感': 15 - (answers.B4 + answers.B5 + answers.B6),
+                    '疲労感': 15 - (answers.B7 + answers.B8 + answers.B9),
+                    '不安感': 15 - (answers.B10 + answers.B11 + answers.B12),
+                    '抑うつ感': 30 - [answers.B13, answers.B14, answers.B15, answers.B16, answers.B17, answers.B18].reduce((a, b) => a + b, 0),
+                    '身体愁訴': 55 - [answers.B19, answers.B20, answers.B21, answers.B22, answers.B23, answers.B24, answers.B25, answers.B26, answers.B27, answers.B28, answers.B29].reduce((a, b) => a + b, 0),
+                },
+                C: {
+                    '上司からのサポート': 15 - (answers.C1 + answers.C4 + answers.C7),
+                    '同僚からのサポート': 15 - (answers.C2 + answers.C5 + answers.C8),
+                    '家族・友人からのサポート': 15 - (answers.C3 + answers.C6 + answers.C9),
+                },
+                D: {
+                    '仕事や生活の満足度': 10 - (answers.D1 + answers.D2)
+                }
+            };
+            
+            const evaluationPoints = { A: {}, B: {}, C: {}, D: {} };
+            const totals = { A: 0, B: 0, C: 0 };
+
+            for (const section in scales) {
+                for (const scaleName in scales[section]) {
+                    const rawScore = scales[section][scaleName];
+                    const point = getEvaluationPoint(scaleName, rawScore, gender);
+                    evaluationPoints[section][scaleName] = point;
+                    if (totals.hasOwnProperty(section)) {
+                        totals[section] += point;
+                    }
+                }
+            }
+            
+            let isHighStress = false;
+            let reason = '';
+            const totalAC = totals.A + totals.C;
+
+            if (totals.B <= 12) {
+                isHighStress = true;
+                reason = `心身のストレス反応（領域B）の評価点合計が ${totals.B}点 であり、基準（12点以下）に該当しました。`;
+            } else if (totalAC <= 26 && totals.B <= 17) {
+                isHighStress = true;
+                reason = `仕事のストレス要因（領域A）と周囲のサポート（領域C）の評価点合計が ${totalAC}点（基準26点以下）、かつ心身のストレス反応（領域B）の評価点合計が ${totals.B}点（基準17点以下）であり、基準に該当しました。`;
+            } else {
+                reason = '評価基準に基づき、高ストレス者には該当しませんでした。';
+            }
+            
+            const satisfactionEvaluationPoint = evaluationPoints.D['仕事や生活の満足度'];
+
+            return { totals, evaluationPoints, isHighStress, reason, satisfactionEvaluationPoint, gender };
+        }
+
+        function displayResults(results) {
+            if (!results) return;
+
+            const { totals, evaluationPoints, isHighStress, reason, satisfactionEvaluationPoint, gender } = results;
+            const container = document.getElementById('results-container');
+            const resultColor = isHighStress ? '#ff453a' : '#34c759';
+            const resultBgColor = isHighStress ? 'rgba(255, 69, 58, 0.1)' : 'rgba(52, 199, 89, 0.1)';
+            const genderText = gender === 'male' ? '男性' : '女性';
+
+            let highStressGuidance = '';
+            if (isHighStress) {
+                highStressGuidance = `
+                    <div class="bg-orange-50 border-l-4 border-orange-400 p-4 mt-6 rounded-r-lg">
+                        <div class="flex">
+                            <div class="py-1">
+                                <svg class="h-6 w-6 text-orange-500 mr-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-bold text-orange-800">専門家への相談をお勧めします</p>
+                                <p class="text-sm text-orange-700 mt-1">
+                                    ストレスが高い状態が続くと心身に不調をきたす可能性があります。一人で抱え込まず、専門の医師やカウンセラーに相談することをご検討ください。
+                                </p>
+                                <a href="https://workplace-healthcare.com/" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors">
+                                    D2C産業医に相談する
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let resultHTML = `
+                <div class="bg-[var(--card-background-color)] p-6 sm:p-8 rounded-2xl shadow-sm result-card">
+                    <h2 class="text-2xl font-bold text-center mb-2">評価結果</h2>
+                    <p class="text-center text-sm text-[var(--secondary-text-color)] mb-6">(${genderText}の基準で評価)</p>
+                    
+                    <div class="text-center p-4 rounded-xl" style="background-color: ${resultBgColor};">
+                        <p class="text-xl font-bold" style="color: ${resultColor};">${isHighStress ? '「高ストレス者」と判定されました' : '「高ストレス者」には該当しませんでした'}</p>
+                        <p class="text-sm text-[var(--secondary-text-color)] mt-2">${reason}</p>
+                    </div>
+                    ${highStressGuidance}
+
+                    <div class="mt-8 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                            <div class="bg-gray-100 p-4 rounded-xl">
+                                <p class="text-sm text-[var(--secondary-text-color)]">仕事のストレス要因 (A)</p>
+                                <p class="text-2xl font-bold">${totals.A}</p>
+                            </div>
+                            <div class="bg-gray-100 p-4 rounded-xl">
+                                <p class="text-sm text-[var(--secondary-text-color)]">心身のストレス反応 (B)</p>
+                                <p class="text-2xl font-bold">${totals.B}</p>
+                            </div>
+                            <div class="bg-gray-100 p-4 rounded-xl">
+                                <p class="text-sm text-[var(--secondary-text-color)]">周囲のサポート (C)</p>
+                                <p class="text-2xl font-bold">${totals.C}</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-100 p-4 rounded-xl text-center">
+                             <p class="text-sm text-[var(--secondary-text-color)]">参考：仕事や生活の満足度</p>
+                             <p class="text-2xl font-bold">${satisfactionEvaluationPoint} <span class="text-base font-medium">点</span></p>
+                        </div>
+                    </div>
+                    
+                    <details class="mt-8 bg-gray-50 rounded-xl p-4 cursor-pointer">
+                        <summary class="font-medium text-gray-800">全ての評価点詳細</summary>
+                        <div class="mt-4 space-y-4">
+            `;
+            
+            const sectionTitles = {A: '領域A: 仕事のストレス要因', B: '領域B: 心身のストレス反応', C: '領域C: 周囲のサポート'};
+            for(const section in evaluationPoints) {
+                if (section === 'D') continue;
+                resultHTML += `<div><h4 class="font-bold text-md text-gray-700 mb-2">${sectionTitles[section]}</h4><ul class="list-disc list-inside space-y-1 text-sm text-[var(--secondary-text-color)]">`;
+                for (const scaleName in evaluationPoints[section]) {
+                    resultHTML += `<li>${scaleName}: <span class="font-semibold text-[var(--text-color)]">${evaluationPoints[section][scaleName]}点</span></li>`;
+                }
+                resultHTML += `</ul></div>`;
+            }
+
+            resultHTML += `</div></details></div>`;
+            
+            container.innerHTML = resultHTML;
+            setTimeout(() => {
+                container.querySelector('.result-card')?.classList.add('visible');
+            }, 100);
+        }
+
+        function showModal(message) {
+            let modal = document.getElementById('alert-modal');
+            if (modal) modal.remove();
+            
+            modal = document.createElement('div');
+            modal.id = 'alert-modal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-40 overflow-y-auto h-full w-full flex items-center justify-center z-50 px-4';
+            modal.innerHTML = `
+                <div class="p-6 border-0 w-full max-w-sm shadow-xl rounded-2xl bg-white">
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-gray-900">ご注意</h3>
+                        <p class="text-sm text-gray-600 mt-2 mb-6">${message}</p>
+                        <button id="close-modal-btn" class="w-full px-4 py-2 bg-[var(--primary-color)] text-white text-base font-medium rounded-lg hover:bg-[var(--primary-hover-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('close-modal-btn').addEventListener('click', () => {
+                modal.remove();
+            });
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('calculate-btn').addEventListener('click', () => {
+            const results = calculateScores();
+            if (results) {
+                displayResults(results);
+                document.getElementById('results-container').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuestions();
+        });
+    </script>
+</body>
+</html>
